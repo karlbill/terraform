@@ -106,8 +106,47 @@ provider "aws" {
   profile                  = "customprofile"
 }
 ```
-**Porém este é o comportamento padrão e não precisa ser declarado explicitamente.**
+Há quem diga que por ser o comportamento padrão, o código acima não precisa ser explicitamente informado. No meu caso, precisei informar o caminho dos arquivos e removi a chave profile para que o plano de execução (que será visto mais à frente) fosse executado:
+```
+provider "aws" {
+  shared_config_files      = ["/<caminho>/.aws/config"]
+  shared_credentials_files = ["/<caminho>/.aws/credentials"]
+}
+```
 
+## Criação de uma instancia Windows (Free Tier)
+Link para a documentação de referência: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/instance
+No link acima, é apresentado um exemplo de código do Terraform para a criação de uma instância na AWS:
+```
+resource "aws_instance" "this" {
+  ami                       = "ami-0dcc1e21636832c5d"
+  instance_type             = "m5.large"
+  host_resource_group_arn   = "arn:aws:resource-groups:us-west-2:012345678901:group/win-testhost"
+  tenancy                   = "host"
+}
+```
+Vamos alterar um pouco o exemplo:
+```
+resource "aws_instance" "Windows_instance" { # Define o recurso como uma instância da AWS e a nomeia de Windows_instance
+  ami           = "ami-017cdd6dc706848b2"    # Informa a chave da imagem do sistema operacional Windows Server 2022 elegível
+  instance_type = "t2.micro"                 # Tipo de instância elegível a Free Tier
+  ebs_block_device {
+    volume_size = "30"  # Capacidade de armazenamento do volume (30 GB é o máximo elegível para Free Tier)
+    volume_type = "gp2" # Tipo de volume de armazenamento também elegível a Free Tier (EBS General Purpose)    
+  }
+  tags = {
+    Name = "FreeTier" # Define um rótulo para a instância
+  }
+}
+```
+
+Criado o código para a instância, vamos utilizar dois comandos do Terraform para análise e formatação do código:
+- **terraform fmt**: formata o código para o padrão do Terraform
+- **terraform validate**: verifica se o código escrito contém algum erro de sintaxe
+
+Feita a formatação e análise, podemos agora rodar o comando que mostrará o planejamento do Terraform para realizar a criação da instância de acordo com o código escrito:
+- **terraform plan**: mostra todo o plano de execução que o Terraform fará para a criação da instância EC2 na AWS
+- **terraform apply**: se estiver tudo certo com o planejamento, este é o comando para a criação da instância na AWS, via terraform.
 
 
 
